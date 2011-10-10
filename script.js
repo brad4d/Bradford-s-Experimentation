@@ -19,12 +19,10 @@ var disk = {
 };
 var dragging = false;
 
-function truncateToRect(rect, coordinates) {
-  var x = coordinates.x;
-  var y = coordinates.y;
-  if (x < rect.x) {
-    x = rect.x
-  }
+function truncateToCanvas(coordinates) {
+  var x = Math.max(0, Math.min(coordinates.x, canvas.width));
+  var y = Math.max(0, Math.min(coordinates.y, canvas.height));
+  return {x: x, y: y};
 }
 function onMouseDown(event) {
   var mouseCoordinates = getMouseCoordinates(event);
@@ -40,8 +38,8 @@ function onMouseUp(event) {
 
 function onMouseMove(event) {
   var mouseCoordinates = getMouseCoordinates(event);
-  if (dragging && isWithinCanvas(mouseCoordinates)) {
-    disk.setPosition(mouseCoordinates);
+  if (dragging) {
+    disk.setPosition(truncateToCanvas(mouseCoordinates));
   }
 }
 
@@ -57,12 +55,6 @@ function getMouseCoordinates(event) {
 
 function isWithinDisk(coordinates) {
   return distance(disk, coordinates) < disk.r;
-}
-
-function isWithinCanvas(coordinates) {
-  var x = coordinates.x;
-  var y = coordinates.y;
-  return x >= 0 && x < canvas.width && y >=0 && y < canvas.height;
 }
 
 function distance(c1, c2) {
