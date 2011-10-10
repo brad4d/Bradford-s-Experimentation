@@ -1,4 +1,11 @@
+var SQUARE_SIZE = 32;
+var GRID_HEIGHT = 8;
+var GRID_WIDTH = 11; // 8 columns on the board + 3 for out-of-play checkers
+
 var canvas = document.getElementById("canvas");
+// 1 pixel border around everything
+canvas.width = SQUARE_SIZE * GRID_WIDTH + 2;
+canvas.height = SQUARE_SIZE * GRID_HEIGHT + 2;
 var context = canvas.getContext('2d');
 var canvasRect = {
   x: 0,
@@ -77,8 +84,26 @@ function drawDisk() {
   context.restore();
 }
 
+function drawBoard() {
+  var x = 0, y = 0;
+  var COLOR = ['#fff', '#000'];
+  for (x = 0; x < 8; ++x) {
+    for (y = 0; y < 8; ++y) {
+      context.fillStyle = COLOR[(x + y) % 2];
+      context.fillRect(
+          // +1 for outer border, +1 for border around individual square
+          x * SQUARE_SIZE + 2,
+          y * SQUARE_SIZE + 2,
+          // -2 for border within square
+          SQUARE_SIZE - 2,
+          SQUARE_SIZE - 2);
+    }
+  }
+}
+
 function redraw() {
   clear();
+  drawBoard();
   drawDisk();
 }
 
