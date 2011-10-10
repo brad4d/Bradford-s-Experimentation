@@ -7,12 +7,6 @@ var canvas = document.getElementById("canvas");
 canvas.width = SQUARE_SIZE * GRID_WIDTH + 2;
 canvas.height = SQUARE_SIZE * GRID_HEIGHT + 2;
 var context = canvas.getContext('2d');
-var canvasRect = {
-  x: 0,
-  y: 0,
-  height: canvas.height,
-  width: canvas.width
-};
 
 var disk = {
   x: canvas.width / 2,
@@ -26,11 +20,52 @@ var disk = {
 };
 var dragging = false;
 
-function truncateToCanvas(coordinates) {
-  var x = Math.max(0, Math.min(coordinates.x, canvas.width));
-  var y = Math.max(0, Math.min(coordinates.y, canvas.height));
-  return {x: x, y: y};
+function Range(min, max) {
+  if (max < min) {
+    throw new Error("Range(): " + max + " < " + min);
+  }
+  this.max = max;
+  this.min = min;
 }
+
+Range.prototype.truncate = function (x) {
+  return Math.max(this.min, Math.min(this.max, x));
+}
+
+function Point(x, y) {
+  this.x = x;
+  this.y = y;
+}
+
+Point.prototype.add = function (other) {
+  return new Point(this.x + other.x, this.y + other.y);
+};
+
+Point.prototype.sub = function (other) {
+  return new Point(this.x - other.x, this.y - other.y);
+};
+
+Point.prototype.mul = function (other) {
+  return new Point(this.x * other.x, this.y * other.y);
+};
+
+function PointRange(xMin, xMax, yMin, yMax) {
+  this.xRange = new Range(xMin, xMax);
+  this.yRange = new Range(yMin, yMax);
+}
+
+PointRange.prototype.truncate = function (point) {
+  var x, y;
+  return new Point(
+      this.xRange.truncate(point.x),
+      this.yRange.truncate(point.y));
+};
+
+var CANVAS_RANGE = new PointRange(0, canvas.width, 0, canvas.height);
+function truncateToCanvas(point) {
+  return CANVAS_RANGE.truncate(point);
+}
+
 function onMouseDown(event) {
   var mouseCoordinates = getMouseCoordinates(event);
   if (isWithinDisk(mouseCoordinates)) {
@@ -40,7 +75,11 @@ function onMouseDown(event) {
 }
 
 function onMouseUp(event) {
-  dragging = false;
+  var mouseCoordinates = getMouseCoordinates(event);
+  if (dragging) {
+    dragging = false;
+    disk.setPosition(closestSquareCenter(mouseCoordinates));
+  }
 }
 
 function onMouseMove(event) {
@@ -99,6 +138,37 @@ function drawBoard() {
           SQUARE_SIZE - 2);
     }
   }
+}
+
+/**
+ * Returns the Point representing the indices of the closest square.
+ * 
+ * point must be expressed in canvas coordinates
+ * return value is expressed as square indices
+ */
+function closestSquare(point) {
+  // constrain point within inner box containing the squares
+  point = new PointRange(
+      1, SQUARE_SIZE * GRID_WIDTH,
+      1, SQUARE_SIZE * GRID_HEIGHT)
+          .truncate(point);
+  // rezero at top-left of first square
+  point = point.sub(new Point(1, 1));
+  return new Point(
+    Math.floor(point.x / SQUARE_SIZE),
+    Math.floor(point.y / SQUARE_SIZE)
+  );
+}
+
+/**
+ * Returns center point of the closest square.
+ */
+function closestSquareCenter(point) {
+  var square = closestSquare(point);
+  // multiply to get top-left point of square
+  // then add half size to get center
+  return square.mul(new Point(SQUARE_SIZE, SQUARE_SIZE))
+      .add(new Point(SQUARE_SIZE / 2, SQUARE_SIZE / 2));
 }
 
 function redraw() {
