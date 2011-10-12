@@ -8,11 +8,28 @@ canvas.width = SQUARE_SIZE * GRID_WIDTH + 2;
 canvas.height = SQUARE_SIZE * GRID_HEIGHT + 2;
 var context = canvas.getContext('2d');
 
+function Checker(color, position) {
+  this.color = color;
+  this.position = position;
+}
+
+Checker.prototype.r = 10;
+
+Checker.prototype.draw = function () {
+  var p = this.position;
+  context.save();
+  context.beginPath();
+  context.arc(p.x, p.y, this.r, 0, 2 * Math.PI, false);
+  context.fillStyle = this.color;
+  context.fill();
+  context.restore();
+};
+
 var disk = {
   x: canvas.width / 2,
   y: canvas.height / 2,
   r: 10,
-  style: 'ff0',
+  style: 'red',
   setPosition: function (coordinates) {
     this.x = coordinates.x;
     this.y = coordinates.y;
@@ -125,7 +142,7 @@ function drawDisk() {
 
 function drawBoard() {
   var x = 0, y = 0;
-  var COLOR = ['#fff', '#000'];
+  var COLOR = ['#880', '#FFA'];
   for (x = 0; x < 8; ++x) {
     for (y = 0; y < 8; ++y) {
       context.fillStyle = COLOR[(x + y) % 2];
