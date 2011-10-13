@@ -1,0 +1,228 @@
+<!doctype html>
+<html>
+<head>
+<title>Math Quiz</title>
+
+<style>
+#problem {
+  display: inline-block;
+}
+
+/**
+ * Right align cells of tables in the settings and results.
+ */
+#settingsDiv td, #resultsDiv td:first-child {
+  text-align: right;
+}
+
+</style>
+</head>
+
+<body>
+<h1>Math Quiz</h1>
+
+<div id="settingsDiv">
+<h2>Quiz Settings</h2>
+<form id="settings"><table><tbody>
+  <tr>
+    <td>Minutes:</td>
+    <td><input id="minutes" type="number" min="1" max="15" value="5"></td>
+  </tr>
+  <tr>
+    <td>Operand digits:</td>
+    <td><input id="opDigits" type="number" min="1" max="10" value="2"></td>
+  </tr>
+  <tr>
+    <td colspan="2"><input id="quizStart" type="submit" value="Start Quiz"></td>
+  </tr>
+</tbody></table></form>
+</div>
+
+<div id="quizDiv">
+<h2> Quiz </h2>
+<div id="problem"></div> = <input id="answer" type="text">
+</div>
+
+<div id="resultsDiv">
+<h2>Results</h2>
+<table>
+  <tbody>
+    <tr>
+      <td>Minutes:</td>
+      <td id="resultMinutes"></td>
+    <tr>
+    <tr>
+      <td>Operand Digits:</td>
+      <td id="resultsOperandDigits"></td>
+    </tr>
+      <td>Problems Done:</td>
+      <td id="problemsDone"></td>
+    </tr>
+    <tr>
+      <td>Problems / Minute:</td>
+      <td id="problemsPerMinute"></td>
+    </tr>
+    <tr>
+      <td>Correct Answers:</td>
+      <td id="correctAnswers"></td>
+    </tr>
+    <tr>
+      <td>Correct %:</td>
+      <td id="correctPercent">test</td>
+    </tr>
+    <tr>
+      <td colspan="2"><button id="newQuiz">New Quiz</button></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div id="todoDiv">
+<h2>TO DO</h2>
+
+<ul>
+<li> Allow setting operation
+<li> Show statistics
+     <ul>
+     <li> type of operation
+     </ul>
+</ul>
+</div>
+
+<script>
+var settingsDiv = document.getElementById('settingsDiv');
+var quizDiv = document.getElementById('quizDiv');
+var resultsDiv = document.getElementById('resultsDiv');
+var todoDiv = document.getElementById('todoDiv');
+
+// initially only the settingsDiv should be visible
+quizDiv.style.display = 'none';
+resultsDiv.style.display = 'none';
+todoDiv.style.display = 'none';
+
+var problem_elm = document.getElementById('problem');
+var answer_elm = document.getElementById('answer');
+var settings = document.getElementById('settings');
+var opDigitsElm = document.getElementById('opDigits');
+var minutesElm = document.getElementById('minutes');
+
+// results fields
+var resultMinutes = document.getElementById("resultMinutes");
+var resultsOperandDigits = document.getElementById("resultsOperandDigits");
+var problemsDone = document.getElementById("problemsDone");
+var problemsPerMinute = document.getElementById("problemsPerMinute");
+var correctAnswers = document.getElementById("correctAnswers");
+var correctPercent = document.getElementById("correctPercent");
+
+/**
+ * data about the currently executing or just finished quiz.
+ */
+var quizData;
+
+/**
+ * answer to current problem.
+ */
+var answer;
+
+/**
+ * Starts the quiz.
+ * Execute this when the "Start Quiz" button is pressed.
+ */
+function startQuiz(event) {
+  // don't do normal browser "submit"
+  event.preventDefault();
+  // hide settings and show quiz.
+  settingsDiv.style.display = 'none';
+  quizDiv.style.display = 'block';
+  // create data for new quiz
+  quizData = {
+    minutes: minutesElm.value,
+    opDigits: opDigitsElm.value,
+    problems: 0,
+    correct: 0
+  };
+  // create first problem
+  newProblem();
+  // set timer to end the quiz
+  setTimeout(endQuiz, quizData.minutes * 60000);
+}
+
+function newProblem() {
+  var op1, op2;
+  op1 = newOperand(quizData.opDigits);
+  op2 = newOperand(quizData.opDigits);
+  answer = op1 + op2;
+  problem_elm.innerHTML = op1 + ' + ' + op2;
+  answer_elm.value = '';
+  answer_elm.focus();
+}
+
+function newOperand(nDigits) {
+  // first digit must be 1-9
+  var result = 1 + Math.floor(Math.random() * 9);
+  for (--nDigits; nDigits > 0; --nDigits) {
+    result = result * 10 + Math.floor(Math.random() * 10);
+  }
+  return result;
+}
+
+/**
+ * Records an answer.
+ * Execute this when the user hits <enter> in the answer text box.
+ */
+function recordAnswer(userAnswer) {
+  quizData.problems++;
+  if (userAnswer == answer) {
+    quizData.correct++;
+  }
+  newProblem();
+}
+
+/**
+ * Handles keypress in the answer text box.
+ */
+function onAnswerKeyPress(event) {
+  // determine key pressed
+  var c = String.fromCharCode(event.charCode);
+  if (c.match(/\d/)) {
+    // user typed a digit, so just let the browser add it to the text field
+    return;
+  }
+  // reject non-digits
+  event.preventDefault();
+  if (c === '\r' || c === '\n') {
+    // user hit return, record answer
+    recordAnswer(parseInt(answer_elm.value));
+  }
+}
+
+/**
+ * End the quiz and show the results.
+ */
+function endQuiz() {
+  quizDiv.style.display = 'none';
+  resultsDiv.style.display = 'block';
+  resultMinutes.innerHTML = quizData.minutes;
+  resultsOperandDigits.innerHTML = quizData.opDigits; 
+  problemsDone.innerHTML = quizData.problems;
+  problemsPerMinute.innerHTML =
+      (quizData.problems / quizData.minutes).toFixed(2);
+  correctAnswers.innerHTML = quizData.correct;
+  correctPercent.innerHTML =
+      (100 * quizData.correct / quizData.problems).toFixed(1); 
+}
+
+/**
+ * Setup for a new quiz.
+ */
+function newQuiz() {
+  resultsDiv.style.display = 'none';
+  settingsDiv.style.display = 'block';
+}
+
+settings.addEventListener('submit', startQuiz, false);
+answer_elm.addEventListener('keypress', onAnswerKeyPress, false);
+document.getElementById('newQuiz').addEventListener('click', newQuiz);
+</script>
+</body>
+</html>
