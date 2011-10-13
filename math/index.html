@@ -26,11 +26,20 @@
 <form id="settings"><table><tbody>
   <tr>
     <td>Minutes:</td>
-    <td><input id="minutes" type="number" min="1" max="15" value="5"></td>
+    <td><input id="minutes" type="number" min="1" max="15" value="1"></td>
   </tr>
   <tr>
     <td>Operand digits:</td>
     <td><input id="opDigits" type="number" min="1" max="10" value="2"></td>
+  </tr>
+  <tr style="display: none;">
+    <td>Operation:</td>
+    <td><select id="operation">
+      <option selected>addition</option>
+      <option>subtraction</option>
+      <option>multiplication</option>
+      <option>division</option>
+    </select></td>
   </tr>
   <tr>
     <td colspan="2"><input id="quizStart" type="submit" value="Start Quiz"></td>
@@ -50,11 +59,12 @@
     <tr>
       <td>Minutes:</td>
       <td id="resultMinutes"></td>
-    <tr>
+    </tr>
     <tr>
       <td>Operand Digits:</td>
       <td id="resultsOperandDigits"></td>
     </tr>
+    <tr>
       <td>Problems Done:</td>
       <td id="problemsDone"></td>
     </tr>
@@ -90,29 +100,15 @@
 </div>
 
 <script>
-var settingsDiv = document.getElementById('settingsDiv');
-var quizDiv = document.getElementById('quizDiv');
-var resultsDiv = document.getElementById('resultsDiv');
-var todoDiv = document.getElementById('todoDiv');
+
+function $(id) {
+  return document.getElementById(id);
+}
 
 // initially only the settingsDiv should be visible
-quizDiv.style.display = 'none';
-resultsDiv.style.display = 'none';
-todoDiv.style.display = 'none';
-
-var problem_elm = document.getElementById('problem');
-var answer_elm = document.getElementById('answer');
-var settings = document.getElementById('settings');
-var opDigitsElm = document.getElementById('opDigits');
-var minutesElm = document.getElementById('minutes');
-
-// results fields
-var resultMinutes = document.getElementById("resultMinutes");
-var resultsOperandDigits = document.getElementById("resultsOperandDigits");
-var problemsDone = document.getElementById("problemsDone");
-var problemsPerMinute = document.getElementById("problemsPerMinute");
-var correctAnswers = document.getElementById("correctAnswers");
-var correctPercent = document.getElementById("correctPercent");
+$('quizDiv').style.display = 'none';
+$('resultsDiv').style.display = 'none';
+$('todoDiv').style.display = 'none';
 
 /**
  * data about the currently executing or just finished quiz.
@@ -132,12 +128,12 @@ function startQuiz(event) {
   // don't do normal browser "submit"
   event.preventDefault();
   // hide settings and show quiz.
-  settingsDiv.style.display = 'none';
-  quizDiv.style.display = 'block';
+  $('settingsDiv').style.display = 'none';
+  $('quizDiv').style.display = 'block';
   // create data for new quiz
   quizData = {
-    minutes: minutesElm.value,
-    opDigits: opDigitsElm.value,
+    minutes: $('minutes').value,
+    opDigits: $('opDigits').value,
     problems: 0,
     correct: 0
   };
@@ -152,9 +148,9 @@ function newProblem() {
   op1 = newOperand(quizData.opDigits);
   op2 = newOperand(quizData.opDigits);
   answer = op1 + op2;
-  problem_elm.innerHTML = op1 + ' + ' + op2;
-  answer_elm.value = '';
-  answer_elm.focus();
+  $('problem').innerHTML = op1 + ' + ' + op2;
+  $('answer').value = '';
+  $('answer').focus();
 }
 
 function newOperand(nDigits) {
@@ -192,7 +188,7 @@ function onAnswerKeyPress(event) {
   event.preventDefault();
   if (c === '\r' || c === '\n') {
     // user hit return, record answer
-    recordAnswer(parseInt(answer_elm.value));
+    recordAnswer(parseInt($('answer').value));
   }
 }
 
@@ -200,15 +196,15 @@ function onAnswerKeyPress(event) {
  * End the quiz and show the results.
  */
 function endQuiz() {
-  quizDiv.style.display = 'none';
-  resultsDiv.style.display = 'block';
-  resultMinutes.innerHTML = quizData.minutes;
-  resultsOperandDigits.innerHTML = quizData.opDigits; 
-  problemsDone.innerHTML = quizData.problems;
-  problemsPerMinute.innerHTML =
+  $('quizDiv').style.display = 'none';
+  $('resultsDiv').style.display = 'block';
+  $('resultMinutes').innerHTML = quizData.minutes;
+  $('resultsOperandDigits').innerHTML = quizData.opDigits; 
+  $('problemsDone').innerHTML = quizData.problems;
+  $('problemsPerMinute').innerHTML =
       (quizData.problems / quizData.minutes).toFixed(2);
-  correctAnswers.innerHTML = quizData.correct;
-  correctPercent.innerHTML =
+  $('correctAnswers').innerHTML = quizData.correct;
+  $('correctPercent').innerHTML =
       (100 * quizData.correct / quizData.problems).toFixed(1); 
 }
 
@@ -216,13 +212,13 @@ function endQuiz() {
  * Setup for a new quiz.
  */
 function newQuiz() {
-  resultsDiv.style.display = 'none';
-  settingsDiv.style.display = 'block';
+  $('resultsDiv').style.display = 'none';
+  $('settingsDiv').style.display = 'block';
 }
 
-settings.addEventListener('submit', startQuiz, false);
-answer_elm.addEventListener('keypress', onAnswerKeyPress, false);
-document.getElementById('newQuiz').addEventListener('click', newQuiz);
+$('settings').addEventListener('submit', startQuiz, false);
+$('answer').addEventListener('keypress', onAnswerKeyPress, false);
+$('newQuiz').addEventListener('click', newQuiz);
 </script>
 </body>
 </html>
