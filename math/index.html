@@ -11,8 +11,15 @@
 /**
  * Right align cells of tables in the settings and results.
  */
-#settingsDiv td, #resultsDiv td {
+#settingsDiv td:first-child, #resultsDiv td {
   text-align: right;
+}
+
+/**
+ * right column of settings is left aligned
+ */
+#settingsDiv td + td {
+  text-align: left;
 }
 
 </style>
@@ -25,12 +32,21 @@
 <h2>Quiz Settings</h2>
 <form id="settings"><table><tbody>
   <tr>
-    <td>Minutes:</td>
-    <td><input id="minutes" type="number" min="1" max="15" value="1"></td>
+    <td>End after:</td>
+    <td>
+      <input id="limit" type="number" min="1" max="15" value="1">
+      <select id="limitUnits">
+        <option selected>minutes</option>
+        <option>problems</option>
+      </select>
+    </td>
   </tr>
   <tr>
-    <td>Operand digits:</td>
-    <td><input id="opDigits" type="number" min="1" max="10" value="2"></td>
+    <td>Operands have:</td>
+    <td>
+      <input id="opDigits" type="number" min="1" max="10" value="2">
+      digits
+    </td>
   </tr>
   <tr style="display: none;">
     <td>Operation:</td>
@@ -71,6 +87,10 @@
     <tr>
       <td>Problems / Minute:</td>
       <td id="problemsPerMinute"></td>
+    </tr>
+    <tr>
+      <td>Seconds / Problem:</td>
+      <td id="secondsPerProblem"></td>
     </tr>
     <tr>
       <td>Correct Answers:</td>
@@ -132,15 +152,20 @@ function startQuiz(event) {
   $('quizDiv').style.display = 'block';
   // create data for new quiz
   quizData = {
-    minutes: $('minutes').value,
-    opDigits: $('opDigits').value,
+    limitUnits: $('limitUnits').value,
+    limit: parseInt($('limit').value),
+    opDigits: parseInt($('opDigits').value),
     problems: 0,
-    correct: 0
+    correct: 0,
+    startTime: new Date()
   };
   // create first problem
   newProblem();
-  // set timer to end the quiz
-  setTimeout(endQuiz, quizData.minutes * 60000);
+  
+  if (quizData.limitType === 'minutes') {
+    // set timer to end the quiz
+    setTimeout(endQuiz, quizData.limit * 60000);
+  }
 }
 
 function newProblem() {
@@ -171,7 +196,20 @@ function recordAnswer(userAnswer) {
   if (userAnswer == answer) {
     quizData.correct++;
   }
-  newProblem();
+  if (problemLimitReached()) {
+    endQuiz(); // 
+  } else {
+    newProblem();
+  }
+}
+
+/**
+ * Return true if the quiz problem limit has been reached.  Returns false if the
+ * limit is set in minutes.
+ */
+function problemLimitReached() {
+  return quizData.limitUnits === 'problems' &&
+      quizData.problems === quizData.limit;
 }
 
 /**
@@ -196,13 +234,15 @@ function onAnswerKeyPress(event) {
  * End the quiz and show the results.
  */
 function endQuiz() {
+  var seconds = (new Date() - quizData.startTime) / 1000;
+  var minutes = seconds / 60;
   $('quizDiv').style.display = 'none';
   $('resultsDiv').style.display = 'block';
-  $('resultMinutes').innerHTML = quizData.minutes;
+  $('resultMinutes').innerHTML = minutes.toFixed(2);
   $('resultsOperandDigits').innerHTML = quizData.opDigits; 
   $('problemsDone').innerHTML = quizData.problems;
-  $('problemsPerMinute').innerHTML =
-      (quizData.problems / quizData.minutes).toFixed(2);
+  $('problemsPerMinute').innerHTML = (quizData.problems / minutes).toFixed(2);
+  $('secondsPerProblem').innerHTML = (seconds / quizData.problems).toFixed(2);
   $('correctAnswers').innerHTML = quizData.correct;
   $('correctPercent').innerHTML =
       (100 * quizData.correct / quizData.problems).toFixed(1); 
